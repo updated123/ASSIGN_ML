@@ -1,0 +1,69 @@
+{
+  "run_id": "20260227_014029",
+  "model_type": "xgboost",
+  "target": "delivery_duration_days",
+  "target_log_transform": true,
+  "train_frac": 0.7,
+  "val_frac": 0.15,
+  "test_frac": 0.15,
+  "feature_set": {
+    "numeric": [
+      "intra_state",
+      "total_freight_value",
+      "freight_ratio",
+      "average_weight_per_item",
+      "avg_item_price",
+      "total_weight_g",
+      "total_order_value",
+      "total_volume_cm3",
+      "bulky_flag",
+      "item_count"
+    ],
+    "categorical": [
+      "primary_category",
+      "payment_type_primary",
+      "seller_state",
+      "customer_state",
+      "customer_region",
+      "seller_region"
+    ]
+  },
+  "validation_metrics": {
+    "mae": 4.59943239693289,
+    "rmse": 6.545518329786194,
+    "mape": 41.86535633353995,
+    "r2": 0.2802633905235913
+  },
+  "test_metrics": {
+    "mae": 4.855341864015095,
+    "rmse": 6.087413692061915,
+    "mape": 42.0070846743425,
+    "r2": -0.2423678659357893
+  },
+  "ridge_val_metrics": {
+    "mae": 4.610202862348019,
+    "rmse": 6.5380793725449005,
+    "mape": 40.859681429677,
+    "r2": 0.28189841685509764
+  },
+  "ridge_test_metrics": {
+    "mae": 4.77911480386916,
+    "rmse": 7.176973787436137,
+    "mape": 41.22962025682992,
+    "r2": -0.7269004245701198
+  },
+  "tree_val_metrics": {
+    "mae": 4.59943239693289,
+    "rmse": 6.545518329786194,
+    "mape": 41.86535633353995,
+    "r2": 0.2802633905235913
+  },
+  "tree_test_metrics": {
+    "mae": 4.855341864015095,
+    "rmse": 6.087413692061915,
+    "mape": 42.0070846743425,
+    "r2": -0.2423678659357893
+  },
+  "notes": "Best model selected by validation MAE. Target log1p when target_log_transform=True.",
+  "ridge_coefficients": null
+}

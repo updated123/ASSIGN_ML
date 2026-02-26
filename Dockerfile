@@ -27,10 +27,10 @@ COPY --from=builder /usr/local/lib/python3.10/site-packages /usr/local/lib/pytho
 COPY --from=builder /usr/local/bin /usr/local/bin
 
 COPY src/ ./src/
-COPY exports/experiments/final_model/ ./exports/experiments/final_model/
+COPY experiments/final_model/ ./experiments/final_model/
 
 # Serve loads from this dir (model.joblib, preprocessor.joblib, feature_config.json)
-ENV EXPERIMENT_DIR=/app/exports/experiments/final_model
+ENV EXPERIMENT_DIR=/app/experiments/final_model
 
 EXPOSE 8000
 

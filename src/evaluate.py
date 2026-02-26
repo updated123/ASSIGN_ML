@@ -38,7 +38,7 @@ except ImportError:
     )
     from train import _LabelEncodedModel
 
-EXPERIMENTS_DIR = PROJECT_ROOT / "exports" / "experiments"
+EXPERIMENTS_DIR = PROJECT_ROOT / "experiments"
 CLASSES = [1, 2, 3, 4, 5]
 
 
@@ -125,7 +125,7 @@ def compute_all_metrics(y_true, y_pred, y_proba, classes=CLASSES):
 def run_evaluation(run_id=None):
     """
     Load experiment run, compute full metrics, error analysis, limitations.
-    Save reports to exports/experiments/<run_id>/.
+    Save reports to experiments/<run_id>/.
     """
     if run_id is None:
         run_dir = get_latest_run_dir()

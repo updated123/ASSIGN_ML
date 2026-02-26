@@ -5,28 +5,25 @@ Multi-class review score prediction with time-based train/val/test split, delive
 ## Structure
 
 ```
-├── README.md
-├── requirements.txt
-├── Dockerfile
-├── notebooks/                      # EDA, feature config, reports
-├── src/                            # Production code
-│   ├── train.py
-│   ├── evaluate.py
-│   ├── serve.py
-│   ├── feature_preparation_review.py
-│   ├── data.py
-│   └── ...
-├── ai_chat_logs/
-├── data/                           # Raw CSVs
-└── exports/
-    └── experiments/                # One folder per run; final_model for serve
+src/
+├── train.py                        # Training (LR + XGBoost/RF), time-based split
+├── evaluate.py                     # Metrics, error analysis, limitations
+├── serve.py                        # FastAPI prediction service (review score)
+├── serve_delivery.py               # FastAPI prediction service (delivery duration)
+├── feature_preparation_review.py   # Feature pipeline and config
+├── train_delivery_duration.py      # Delivery duration training
+├── evaluate_delivery_duration.py   # Delivery duration evaluation
+├── feature_preparation_delivery_duration.py
+├── data.py                         # Raw data loading
+experiments/                        # One folder per run (model, preprocessor, config, reports)
+notebooks/                          # EDA, feature config, reports
 ```
 
 ## Setup
 
 ```bash
 cd ASSIGN_ML
-pip install -r requirements.txt
+pip install pandas numpy scikit-learn xgboost fastapi uvicorn pydantic joblib shap
 ```
 
 ## Training and evaluation
@@ -52,14 +49,12 @@ pip install -r requirements.txt
 
 ## Prediction API (serve)
 
-Loads **model** and **preprocessor** from `exports/experiments/` (looks for `model.joblib` / `model.pkl` and `preprocessor.joblib` / `preprocessor.pkl` in the latest run, or in `EXPERIMENT_DIR` if set).
+Loads **model** and **preprocessor** from `experiments/` (looks for `model.joblib` / `model.pkl` and `preprocessor.joblib` / `preprocessor.pkl` in the latest run, or in `EXPERIMENT_DIR` if set).
 
 ### Run the server
 
 ```bash
-# Use final_model (or leave unset to use latest run under exports/experiments/)
-export EXPERIMENT_DIR=exports/experiments/final_model
-uvicorn src.serve:app --reload --host 0.0.0.0 --port 8000
+uvicorn src.serve:app --reload
 ```
 
 Default: `http://localhost:8000`. Docs: `http://localhost:8000/docs`.
@@ -110,13 +105,77 @@ Example response:
 
 ### Optional environment
 
-- **EXPERIMENT_DIR** – Path to experiment folder (default: latest under `exports/experiments/`).
+- **EXPERIMENT_DIR** – Path to experiment folder (default: latest under `experiments/`).
 
 Artifacts written by training are `model.joblib` and `preprocessor.joblib`; the server also accepts `model.pkl` and `preprocessor.pkl` if you provide them (e.g. by copying or symlinking).
 
+---
+
+## Delivery Duration Prediction API (`serve_delivery`)
+
+Regression API for **delivery_duration_days**. Loads `model.joblib` / `model.pkl`, `preprocessor.joblib` / `preprocessor.pkl`, and `feature_config.json` from the latest delivery experiment (or `DELIVERY_EXPERIMENT_DIR`). Uses log-transform internally when configured; returns predicted days and top-3 SHAP feature impacts.
+
+### Run the server
+
+```bash
+uvicorn src.serve_delivery:app --reload
+```
+
+Default: `http://localhost:8000`. Docs: `http://localhost:8000/docs`.
+
+### Example request
+
+**POST /predict** with a JSON body:
+
+```bash
+curl -X POST http://localhost:8000/predict \
+  -H "Content-Type: application/json" \
+  -d '{
+    "intra_state": 1,
+    "total_freight_value": 22.5,
+    "freight_ratio": 0.18,
+    "average_weight_per_item": 450,
+    "avg_item_price": 80,
+    "total_weight_g": 900,
+    "total_order_value": 160,
+    "total_volume_cm3": 12000,
+    "bulky_flag": 0,
+    "item_count": 2,
+    "primary_category": "beleza_saude",
+    "payment_type_primary": "credit_card",
+    "seller_state": "SP",
+    "customer_state": "RJ",
+    "customer_region": "SE",
+    "seller_region": "SE"
+  }'
+```
+
+Example response:
+
+```json
+{
+  "predicted_delivery_days": 12.47,
+  "top_shap_features": [
+    {"feature": "intra_state", "impact": -1.84},
+    {"feature": "total_freight_value", "impact": 0.92},
+    {"feature": "bulky_flag", "impact": 0.55}
+  ]
+}
+```
+
+Optional: **distance_km** (float) in the body to set distance bucket; if omitted, `distance_km_bucket` is `d_unknown`.
+
+### Optional environment
+
+- **DELIVERY_EXPERIMENT_DIR** – Path to delivery experiment folder (default: latest run in `experiments/` whose `feature_config.json` has `target: "delivery_duration_days"`).
+
+Artifacts: `model.joblib`, `preprocessor.joblib`, `feature_config.json` (or `.pkl` equivalents).
+
+---
+
 ## Docker
 
-The API can run in a container. The image expects **exports/experiments/final_model/** to contain:
+The API can run in a container. The image expects **experiments/final_model/** to contain:
 
 - `model.joblib` (or `model.pkl`)
 - `preprocessor.joblib` (or `preprocessor.pkl`)
@@ -125,10 +184,10 @@ The API can run in a container. The image expects **exports/experiments/final_mo
 Copy (or symlink) your chosen run into `final_model` before building:
 
 ```bash
-mkdir -p exports/experiments/final_model
-cp exports/experiments/<run_id>/model.joblib exports/experiments/final_model/
-cp exports/experiments/<run_id>/preprocessor.joblib exports/experiments/final_model/
-cp exports/experiments/<run_id>/feature_config.json exports/experiments/final_model/
+mkdir -p experiments/final_model
+cp experiments/<run_id>/model.joblib experiments/final_model/
+cp experiments/<run_id>/preprocessor.joblib experiments/final_model/
+cp experiments/<run_id>/feature_config.json experiments/final_model/
 ```
 
 Build and run:

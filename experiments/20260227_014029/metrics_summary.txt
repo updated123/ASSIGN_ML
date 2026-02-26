@@ -1,0 +1,5 @@
+Run: 20260227_014029
+Model: xgboost
+Target transform: log1p=True
+Val  MAE=4.5994 RMSE=6.5455 R2=0.2803
+Test MAE=4.8553 RMSE=6.0874 R2=-0.2424

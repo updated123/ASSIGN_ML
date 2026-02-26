@@ -1,6 +1,6 @@
-# Exclude other experiment runs; only exports/experiments/final_model/ is copied
-exports/experiments/*
-!exports/experiments/final_model/
+# Exclude other experiment runs; only experiments/final_model/ is copied
+experiments/*
+!experiments/final_model/
 
 # Development and data
 .git

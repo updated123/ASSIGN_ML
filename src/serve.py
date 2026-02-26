@@ -1,12 +1,12 @@
 """
 Production FastAPI service for multi-class review score prediction.
 
-Loads model and preprocessor from exports/experiments/ at startup (model.joblib / model.pkl,
+Loads model and preprocessor from experiments/ at startup (model.joblib / model.pkl,
 preprocessor.joblib / preprocessor.pkl). Exposes POST /predict with Pydantic validation,
 optional SHAP explainability for tree-based models, and structured error handling.
 
 Assumptions:
-- Experiment dir is chosen via env EXPERIMENT_DIR or latest run in exports/experiments/.
+- Experiment dir is chosen via env EXPERIMENT_DIR or latest run in experiments/.
 - Request payload may omit historical aggregates and primary_seller_id; defaults applied.
 - late_freight_ratio is derived as late_delivery_flag * freight_ratio (no leakage).
 """
@@ -33,19 +33,13 @@ except ImportError:
             return pickle.load(f)
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
-EXPERIMENTS_DIR = PROJECT_ROOT / "exports" / "experiments"
+EXPERIMENTS_DIR = PROJECT_ROOT / "experiments"
 
-# So joblib can unpickle _LabelEncodedModel saved by train.py (class may be stored as __main__._LabelEncodedModel)
+# So joblib can unpickle _LabelEncodedModel saved by train.py
 try:
     from src.train import _LabelEncodedModel  # noqa: F401
 except ImportError:
     from train import _LabelEncodedModel  # noqa: F401
-
-def _register_label_encoded_model_for_unpickle():
-    """When run via 'python -m uvicorn', __main__ is uvicorn; register our class so joblib finds it."""
-    import sys
-    if "__main__" in sys.modules:
-        sys.modules["__main__"]._LabelEncodedModel = _LabelEncodedModel
 
 # ---------------------------------------------------------------------------
 # App and global model state (loaded once at startup)
@@ -65,27 +59,38 @@ _shap_model_raw = None  # underlying tree model for SHAP (unwrap _LabelEncodedMo
 
 
 def _get_experiment_dir() -> Path:
-    """Resolve experiment directory: env EXPERIMENT_DIR or latest run with model."""
+    """Resolve experiment directory: env EXPERIMENT_DIR or latest *review* run with model (skips delivery_duration experiments)."""
     if os.environ.get("EXPERIMENT_DIR"):
         p = Path(os.environ["EXPERIMENT_DIR"])
-        if p.is_absolute():
-            return p
-        return PROJECT_ROOT / p
+        if not p.is_absolute():
+            p = PROJECT_ROOT / p
+        return p
     if not EXPERIMENTS_DIR.exists():
-        raise FileNotFoundError("exports/experiments/ not found; run training first.")
+        raise FileNotFoundError("experiments/ not found; run training first.")
     dirs = sorted(EXPERIMENTS_DIR.glob("*"), key=lambda x: x.name, reverse=True)
     for d in dirs:
         if not d.is_dir():
             continue
-        if (d / "model.joblib").exists() or (d / "model.pkl").exists():
-            return d
-    raise FileNotFoundError("No experiment with model.joblib or model.pkl found.")
+        if not (d / "model.joblib").exists() and not (d / "model.pkl").exists():
+            continue
+        # Skip delivery duration experiments (use serve_delivery for those)
+        cfg_path = d / "feature_config.json"
+        if cfg_path.exists():
+            try:
+                import json
+                with open(cfg_path, "r", encoding="utf-8") as f:
+                    cfg = json.load(f)
+                if cfg.get("target") == "delivery_duration_days":
+                    continue
+            except Exception:
+                pass
+        return d
+    raise FileNotFoundError("No review experiment (model.joblib/model.pkl) found. Run: python -m src.train")
 
 
 def _load_model_and_preprocessor():
     """Load model, preprocessor, config; build feature name list for SHAP."""
     global _model, _preprocessor, _config, _feature_names_out, _shap_explainer, _shap_model_raw
-    _register_label_encoded_model_for_unpickle()
     exp_dir = _get_experiment_dir()
     model_path = exp_dir / "model.joblib" if (exp_dir / "model.joblib").exists() else exp_dir / "model.pkl"
     prep_path = exp_dir / "preprocessor.joblib" if (exp_dir / "preprocessor.joblib").exists() else exp_dir / "preprocessor.pkl"
@@ -273,15 +278,10 @@ def _top_shap_features(X: np.ndarray, predicted_class_index: int) -> list[dict]:
 # ---------------------------------------------------------------------------
 # Response schema
 # ---------------------------------------------------------------------------
-class ShapFeature(BaseModel):
-    feature: str
-    impact: float
-
-
 class PredictResponse(BaseModel):
     predicted_review_score: int
     class_probabilities: dict[str, float]
-    top_shap_features: list[ShapFeature] = []
+    top_shap_features: list[dict[str, float]] = []
 
 
 @app.post("/predict", response_model=PredictResponse)

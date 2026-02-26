@@ -1,0 +1,29 @@
+{
+  "target": "delivery_duration_days",
+  "numeric": [
+    "intra_state",
+    "total_freight_value",
+    "freight_ratio",
+    "average_weight_per_item",
+    "avg_item_price",
+    "total_weight_g",
+    "total_order_value",
+    "total_volume_cm3",
+    "bulky_flag",
+    "item_count"
+  ],
+  "categorical": [
+    "primary_category",
+    "payment_type_primary",
+    "seller_state",
+    "customer_state",
+    "customer_region",
+    "seller_region"
+  ],
+  "target_log_transform": true,
+  "diagnostics": {
+    "target_skew": 3.8333365823585694,
+    "target_mean": 12.558201306105524,
+    "outliers_gt_60": 306
+  }
+}

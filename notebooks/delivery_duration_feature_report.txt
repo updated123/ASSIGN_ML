@@ -1,0 +1,50 @@
+======================================================================
+DELIVERY DURATION – FEATURE PREPARATION & DIAGNOSTICS REPORT
+======================================================================
+
+1. LEAKAGE BOUNDARIES (approval-time-safe only)
+   Safe: order_purchase_timestamp, seller/customer location, product category,
+   order value, freight, item_count, product dimensions, payment type, historical seller.
+   Excluded: order_delivered_customer_date, order_estimated_delivery_date,
+   delivery_delay_days, late_delivery_flag, review_score.
+
+2. TARGET DISTRIBUTION (delivery_duration_days)
+   n=96470, mean=12.56, median=10.22, std=9.55
+   skewness=3.83, outliers (>60 days)=306 (0.32%)
+   Recommend log-transform: True
+
+3. HIGH CORRELATION PAIRS (|r| > 0.8)
+   total_order_value vs avg_item_price: Pearson=0.924, Spearman=0.939
+   total_weight_g vs total_volume_cm3: Pearson=0.828, Spearman=0.781
+   total_weight_g vs average_weight_per_item: Pearson=0.883, Spearman=0.980
+
+4. HIGH VIF (multicollinearity)
+   []
+
+5. FEATURE–TARGET RANKING (|correlation|)
+intra_state                      3.621841e-01
+total_freight_value              1.671717e-01
+freight_ratio                    8.949526e-02
+average_weight_per_item          8.085361e-02
+avg_item_price                   7.548824e-02
+total_weight_g                   7.148805e-02
+total_order_value                6.962835e-02
+total_volume_cm3                 6.300578e-02
+bulky_flag                       5.649510e-02
+item_count                       1.909227e-02
+seller_hist_late_rate            2.212227e-17
+seller_hist_avg_delivery_days    6.666309e-18
+distance_km                      0.000000e+00
+seller_hist_volume               0.000000e+00
+
+6. FINAL SELECTED FEATURES
+   Numeric: intra_state, total_freight_value, freight_ratio, average_weight_per_item, avg_item_price, total_weight_g, total_order_value, total_volume_cm3, bulky_flag, item_count
+   Categorical: primary_category, payment_type_primary, seller_state, customer_state, customer_region, seller_region
+
+7. REASONING & RISKS
+   - Strongest predictors: seller_hist_avg_delivery_days, distance_km, order value/freight.
+   - Seller/location dominance: historical seller and distance can overfit to few sellers/regions.
+   - Overfitting risk: avoid using too many seller-specific dummies; prefer aggregated historical.
+
+8. TARGET TRANSFORMATION
+   Decision: Log-transform recommended (skew > 1.5 or notable outliers).

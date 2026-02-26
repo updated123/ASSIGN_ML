@@ -1,0 +1,120 @@
+======================================================================
+DELIVERY DURATION – ERROR ANALYSIS
+======================================================================
+
+1. METRICS (original scale)
+   Validation: MAE=4.5847 RMSE=6.5248 MAPE=41.52% R2=0.2848
+   Test:       MAE=4.8111 RMSE=6.0316 MAPE=41.86% R2=-0.2197
+   Test (y_true <= 30 days): MAE=4.6673 R2=-0.4570 n=14366
+   Test (y_true > 30 days):  MAE=24.4792 R2=-4.6297 n=105
+
+2. RESIDUAL ANALYSIS (test set)
+   Mean residual: -3.3526 (negative = overpredict delivery time)
+   Std residual:  5.0140
+   Median residual: -3.7062
+   Overprediction (pred > actual): 83.5% of cases
+   Underprediction (pred < actual): 16.5% of cases
+   |residual| vs actual correlation: 0.313 (positive suggests higher errors for longer deliveries)
+
+3. SEGMENT MAE (test set) – intra_state, inter_state, long-distance bucket
+   intra_state: MAE=3.060 n=5925
+   inter_state: MAE=6.025 n=8546
+   distance_km_bucket=d_unknown: MAE=4.811 n=14471
+
+3b. SEGMENT MAE (other segments)
+   By primary_category:
+      fashion_underwear_e_moda_praia: MAE=7.226 n=4
+      fashion_calcados: MAE=6.440 n=8
+      livros_importados: MAE=6.298 n=9
+      industria_comercio_e_negocios: MAE=6.222 n=29
+      moveis_escritorio: MAE=5.857 n=104
+      casa_conforto: MAE=5.452 n=42
+      eletrodomesticos_2: MAE=5.451 n=45
+      alimentos_bebidas: MAE=5.433 n=34
+
+   By seller_region:
+      NE: MAE=5.491 n=384
+      S: MAE=4.964 n=2050
+      SE: MAE=4.769 n=11821
+      CO: MAE=4.453 n=216
+
+   By order_value_bucket:
+      high: MAE=5.285 n=4919
+      mid: MAE=4.935 n=4775
+      low: MAE=4.200 n=4777
+
+   By bulky_flag:
+      1: MAE=5.181 n=1034
+      0: MAE=4.783 n=13437
+
+
+4. TOP 50 LARGEST ABSOLUTE ERRORS (test)
+   Columns: y_true, y_pred, error, intra_state, primary_category, seller_region, order_value_bucket, bulky_flag, total_order_value (if present)
+   true=79.0 pred=10.6 err=68.4 | intra_state=0 | primary_category=cool_stuff | seller_region=SE | order_value_bucket=mid | bulky_flag=0 | order_val=112
+   true=68.0 pred=7.7 err=60.3 | intra_state=1 | primary_category=automotivo | seller_region=SE | order_value_bucket=high | bulky_flag=0 | order_val=180
+   true=76.0 pred=18.7 err=57.3 | intra_state=0 | primary_category=cool_stuff | seller_region=SE | order_value_bucket=high | bulky_flag=0 | order_val=203
+   true=77.7 pred=20.9 err=56.8 | intra_state=0 | primary_category=beleza_saude | seller_region=S | order_value_bucket=high | bulky_flag=0 | order_val=399
+   true=68.9 pred=14.4 err=54.5 | intra_state=0 | primary_category=informatica_acessorios | seller_region=SE | order_value_bucket=mid | bulky_flag=0 | order_val=86
+   true=63.6 pred=13.3 err=50.3 | intra_state=0 | primary_category=moveis_decoracao | seller_region=S | order_value_bucket=mid | bulky_flag=0 | order_val=101
+   true=66.7 pred=18.7 err=48.0 | intra_state=0 | primary_category=cool_stuff | seller_region=SE | order_value_bucket=high | bulky_flag=0 | order_val=266
+   true=59.0 pred=11.1 err=47.9 | intra_state=0 | primary_category=informatica_acessorios | seller_region=S | order_value_bucket=mid | bulky_flag=0 | order_val=142
+   true=60.7 pred=14.3 err=46.4 | intra_state=0 | primary_category=utilidades_domesticas | seller_region=SE | order_value_bucket=low | bulky_flag=0 | order_val=60
+   true=61.0 pred=14.7 err=46.3 | intra_state=0 | primary_category=informatica_acessorios | seller_region=S | order_value_bucket=mid | bulky_flag=0 | order_val=100
+   true=62.4 pred=16.3 err=46.0 | intra_state=0 | primary_category=utilidades_domesticas | seller_region=SE | order_value_bucket=high | bulky_flag=0 | order_val=341
+   true=59.3 pred=16.3 err=43.0 | intra_state=0 | primary_category=eletroportateis | seller_region=SE | order_value_bucket=high | bulky_flag=0 | order_val=402
+   true=54.2 pred=12.0 err=42.3 | intra_state=0 | primary_category=utilidades_domesticas | seller_region=SE | order_value_bucket=mid | bulky_flag=0 | order_val=138
+   true=57.9 pred=16.0 err=41.9 | intra_state=0 | primary_category=automotivo | seller_region=SE | order_value_bucket=high | bulky_flag=0 | order_val=673
+   true=57.3 pred=16.5 err=40.8 | intra_state=0 | primary_category=utilidades_domesticas | seller_region=SE | order_value_bucket=high | bulky_flag=0 | order_val=149
+   true=59.2 pred=19.1 err=40.2 | intra_state=0 | primary_category=telefonia | seller_region=SE | order_value_bucket=low | bulky_flag=0 | order_val=48
+   true=50.3 pred=13.3 err=37.1 | intra_state=0 | primary_category=fashion_bolsas_e_acessorios | seller_region=SE | order_value_bucket=low | bulky_flag=0 | order_val=65
+   true=42.5 pred=5.7 err=36.7 | intra_state=1 | primary_category=informatica_acessorios | seller_region=SE | order_value_bucket=low | bulky_flag=0 | order_val=22
+   true=49.1 pred=12.8 err=36.3 | intra_state=0 | primary_category=relogios_presentes | seller_region=SE | order_value_bucket=mid | bulky_flag=0 | order_val=114
+   true=44.1 pred=7.8 err=36.3 | intra_state=1 | primary_category=moveis_decoracao | seller_region=SE | order_value_bucket=low | bulky_flag=0 | order_val=42
+   true=41.2 pred=5.3 err=35.9 | intra_state=1 | primary_category=telefonia | seller_region=SE | order_value_bucket=low | bulky_flag=0 | order_val=32
+   true=45.7 pred=11.3 err=34.4 | intra_state=0 | primary_category=bebes | seller_region=S | order_value_bucket=low | bulky_flag=0 | order_val=67
+   true=45.7 pred=11.8 err=33.9 | intra_state=0 | primary_category=informatica_acessorios | seller_region=CO | order_value_bucket=low | bulky_flag=0 | order_val=73
+   true=47.8 pred=14.2 err=33.6 | intra_state=0 | primary_category=bebes | seller_region=SE | order_value_bucket=mid | bulky_flag=0 | order_val=91
+   true=50.8 pred=18.4 err=32.4 | intra_state=0 | primary_category=papelaria | seller_region=SE | order_value_bucket=low | bulky_flag=0 | order_val=43
+   true=46.1 pred=14.9 err=31.3 | intra_state=0 | primary_category=perfumaria | seller_region=SE | order_value_bucket=high | bulky_flag=0 | order_val=239
+   true=38.5 pred=8.6 err=29.9 | intra_state=1 | primary_category=cool_stuff | seller_region=S | order_value_bucket=high | bulky_flag=0 | order_val=149
+   true=49.8 pred=20.8 err=29.0 | intra_state=0 | primary_category=cama_mesa_banho | seller_region=S | order_value_bucket=mid | bulky_flag=0 | order_val=128
+   true=43.2 pred=14.8 err=28.4 | intra_state=0 | primary_category=cama_mesa_banho | seller_region=S | order_value_bucket=high | bulky_flag=0 | order_val=200
+   true=47.9 pred=19.7 err=28.2 | intra_state=0 | primary_category=perfumaria | seller_region=SE | order_value_bucket=high | bulky_flag=0 | order_val=281
+   true=37.7 pred=10.0 err=27.6 | intra_state=1 | primary_category=moveis_decoracao | seller_region=SE | order_value_bucket=high | bulky_flag=1 | order_val=191
+   true=46.1 pred=18.5 err=27.6 | intra_state=0 | primary_category=moveis_decoracao | seller_region=SE | order_value_bucket=mid | bulky_flag=0 | order_val=84
+   true=36.0 pred=8.9 err=27.1 | intra_state=1 | primary_category=moveis_quarto | seller_region=SE | order_value_bucket=mid | bulky_flag=0 | order_val=108
+   true=32.0 pred=5.0 err=27.0 | intra_state=1 | primary_category=perfumaria | seller_region=SE | order_value_bucket=mid | bulky_flag=0 | order_val=103
+   true=34.0 pred=7.9 err=26.1 | intra_state=1 | primary_category=construcao_ferramentas_construcao | seller_region=SE | order_value_bucket=mid | bulky_flag=0 | order_val=132
+   true=42.1 pred=16.0 err=26.1 | intra_state=0 | primary_category=beleza_saude | seller_region=SE | order_value_bucket=low | bulky_flag=0 | order_val=53
+   true=41.5 pred=15.5 err=26.0 | intra_state=0 | primary_category=esporte_lazer | seller_region=SE | order_value_bucket=low | bulky_flag=0 | order_val=61
+   true=44.6 pred=18.7 err=25.8 | intra_state=0 | primary_category=brinquedos | seller_region=SE | order_value_bucket=low | bulky_flag=0 | order_val=57
+   true=30.8 pred=5.0 err=25.7 | intra_state=1 | primary_category=malas_acessorios | seller_region=S | order_value_bucket=mid | bulky_flag=0 | order_val=93
+   true=47.1 pred=22.5 err=24.7 | intra_state=0 | primary_category=beleza_saude | seller_region=SE | order_value_bucket=mid | bulky_flag=0 | order_val=133
+   true=34.0 pred=9.4 err=24.7 | intra_state=0 | primary_category=brinquedos | seller_region=SE | order_value_bucket=high | bulky_flag=0 | order_val=260
+   true=28.8 pred=4.8 err=24.0 | intra_state=1 | primary_category=relogios_presentes | seller_region=SE | order_value_bucket=low | bulky_flag=0 | order_val=67
+   true=41.2 pred=17.2 err=24.0 | intra_state=0 | primary_category=cool_stuff | seller_region=SE | order_value_bucket=high | bulky_flag=0 | order_val=343
+   true=28.7 pred=5.0 err=23.7 | intra_state=1 | primary_category=relogios_presentes | seller_region=SE | order_value_bucket=high | bulky_flag=0 | order_val=180
+   true=36.2 pred=12.8 err=23.4 | intra_state=0 | primary_category=telefonia | seller_region=SE | order_value_bucket=high | bulky_flag=0 | order_val=702
+   true=33.2 pred=9.9 err=23.3 | intra_state=1 | primary_category=beleza_saude | seller_region=SE | order_value_bucket=mid | bulky_flag=0 | order_val=83
+   true=45.6 pred=22.5 err=23.1 | intra_state=0 | primary_category=utilidades_domesticas | seller_region=SE | order_value_bucket=high | bulky_flag=1 | order_val=281
+   true=42.8 pred=20.5 err=22.3 | intra_state=0 | primary_category=beleza_saude | seller_region=NE | order_value_bucket=mid | bulky_flag=0 | order_val=144
+   true=37.5 pred=15.6 err=21.8 | intra_state=0 | primary_category=esporte_lazer | seller_region=SE | order_value_bucket=high | bulky_flag=0 | order_val=336
+   true=42.2 pred=20.4 err=21.8 | intra_state=0 | primary_category=esporte_lazer | seller_region=SE | order_value_bucket=high | bulky_flag=0 | order_val=148
+
+5. EXTREME ERROR SUMMARY
+   Top-50 mean |error|: 34.99 days
+   Top-50 intra_state share: 26.0%
+   Top-50 bulky_flag share: 4.0%
+
+6. LEARNINGS (model comparison & failure modes)
+   Best model: xgboost.
+   Validation R2=0.285, Test R2=-0.220 (negative test R2 suggests overfitting or distribution shift).
+   Residuals: negative mean residual => model overpredicts delivery time (actuals often shorter than predicted).
+   Segment: inter_state has higher MAE than intra_state; long-distance deliveries are harder.
+
+7. IMPROVEMENT SUMMARY
+   Val–test gap: MAE +0.226 days, R2 -0.505 (smaller gap = less overfitting).
+   Log vs raw (Ridge): log test MAE=4.791, raw test MAE=5.968.
+   What improved: stronger tree regularization (max_depth 4–5, reg_alpha/lambda), geo features (region_to_region, distance_km_bucket, inter_state_x_bulky).
+   What still fails: test R2 often negative (time drift / distribution shift); large errors on long deliveries (>30d) and inter_state; tail underprediction.
+   Production reliability: use with caution; recommend segment-specific thresholds or fallbacks for inter_state and long-distance; monitor test-set performance over time.

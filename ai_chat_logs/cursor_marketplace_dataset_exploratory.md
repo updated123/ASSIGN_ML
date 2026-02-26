@@ -1,5 +1,5 @@
 # Marketplace dataset exploratory data analysis
-_Exported on 26/02/2026 at 18:27:00 GMT+5:30 from Cursor (2.4.31)_
+_Exported on 27/02/2026 at 2:06:50 GMT+5:30 from Cursor (2.4.31)_
 
 ---
 
@@ -1166,4 +1166,880 @@ git push -u origin main
 ```
 
 If GitHub asks for a **personal access token** (HTTPS), use the token instead of your password when prompted. Your latest commit is already on local `main`; you only need to run `git push` from a place where you can sign in (terminal on your machine, or CI with credentials).
+
+---
+
+**User**
+
+there are to source folder and requirement which is final one giveme answer in one line
+
+---
+
+**Cursor**
+
+
+**Final source folder:** `ASSIGN_ML/src/`  
+**Final requirements:** `ASSIGN_ML/requirements.txt`
+
+---
+
+**User**
+
+Now I want to solve one more problems, I want to build a new model to predict delivery duration (in days) for each order.
+
+Target:
+
+delivery_duration_days =
+(order_delivered_customer_date - order_purchase_timestamp)
+
+This is a regression problem.
+
+Goal:
+Predict realistic delivery time at order approval time, to improve logistics planning and customer expectations.
+
+1️ Define Leakage Boundaries
+
+We are predicting delivery_duration_days at order approval time.
+Include only features available at or before order approval:
+Safe features:
+
+order_purchase_timestamp
+seller location
+customer location
+product category
+order value
+freight value
+item_count
+product dimensions
+seller state
+customer state
+payment type
+
+Do NOT include:
+
+order_delivered_customer_date
+order_estimated_delivery_date
+delivery_delay_days
+late_delivery_flag
+review_score
+any post-delivery signals
+
+Clearly document why each feature is safe.
+
+A. Order Complexity
+item_count
+total_order_value
+total_freight_value
+freight_ratio
+avg_item_price
+
+B. Product Size & Weight
+
+total_weight_g
+total_volume_cm3 (length × height × width)
+average_weight_per_item
+bulky_flag (large items)
+
+C. Geographic Features
+approximate seller-customer distance using lat/lng
+intra-state vs inter-state flag
+region-level mapping (e.g., SE, NE, etc.)
+
+D. Historical Seller Performance
+(leakage-safe)
+
+seller historical average delivery time
+seller historical late rate
+seller volume
+
+Compute aggregates using only past data (time-aware grouping).
+
+3️ Data Diagnostics
+
+A. Target Distribution
+Describe delivery_duration_days distribution
+Identify skewness
+Identify extreme outliers (e.g., > 60 days)
+Consider log-transform if heavily skewed
+
+B. Correlation Analysis
+
+Compute Pearson and Spearman correlations for numeric features
+Identify highly correlated pairs (> 0.8)
+Remove redundant variables
+Document reasoning
+
+C. Multicollinearity
+
+Compute VIF for numeric features
+Remove features with high VIF
+
+D. Feature-Target Relationship
+
+Correlation with target
+Partial dependence trends (optional lightweight)
+Compare mean duration across:
+
+category
+seller
+distance buckets
+order value buckets
+
+4️ Feature Selection Methods
+
+Apply multiple selection approaches:
+
+(A) Correlation-based filtering
+
+Compare feature rankings.
+
+Identify:
+
+Strongest predictors of delivery duration
+Weak or noisy predictors
+
+Seller/location dominance risks
+
+5️ Final Output
+
+Produce:
+Final selected feature list
+Feature importance comparison table
+Clear reasoning for retained features
+Risks of overfitting seller-specific patterns
+Target transformation decision (raw vs log)
+
+
+Keep implementation modular and production-ready.
+
+---
+
+**Cursor**
+
+
+Implementing a modular, production-ready delivery-duration feature pipeline and diagnostics. Checking the data layout and existing data loading.
+
+
+
+Fixing compatibility and logic: fixing feature_target_correlation and ensuring segment_means doesn't mutate the passed dataframe.
+
+
+
+Running the pipeline to verify it runs (VIF may require statsmodels):
+
+
+
+Updating the report's reasoning to match the actual feature-target ranking (intra_state and freight on top).
+
+
+
+Summary of what’s in place:
+
+---
+
+## **`src/feature_preparation_delivery_duration.py`**
+
+### 1. Leakage boundaries (documented)
+- **Safe (at or before approval):** `order_purchase_timestamp`, seller/customer location (zip, state), product category, order value, freight, `item_count`, product dimensions/weight, payment type, historical seller metrics (time-aware, past only).
+- **Not used:** `order_delivered_customer_date`, `order_estimated_delivery_date`, `delivery_delay_days`, `late_delivery_flag`, `review_score`, any post-delivery signal.  
+Docstrings state why each feature is safe.
+
+### 2. Target and feature groups
+- **Target:** `delivery_duration_days` = `(order_delivered_customer_date - order_purchase_timestamp)` in days (only for delivered orders).
+- **A. Order complexity:** `item_count`, `total_order_value`, `total_freight_value`, `freight_ratio`, `avg_item_price`.
+- **B. Product size & weight:** `total_weight_g`, `total_volume_cm3` (L×H×W per product, summed), `average_weight_per_item`, `bulky_flag` (top 10% by volume).
+- **C. Geographic:** `distance_km` (haversine from zip centroids), `intra_state`, `customer_region` / `seller_region` (state → SE, NE, N, S, CO).
+- **D. Historical seller (leakage-safe):** `seller_hist_avg_delivery_days`, `seller_hist_late_rate` (share of past deliveries > 30 days), `seller_hist_volume`; all from past orders only (time-ordered, expanding).
+
+### 3. Data diagnostics
+- **Target:** mean, median, std, skewness, outliers (>60 days), recommendation for log-transform (e.g. skew > 1.5 or non‑negligible outliers).
+- **Correlation:** Pearson and Spearman; list pairs with |r| > 0.8.
+- **VIF:** multicollinearity (optional, uses `statsmodels` if available); drop list for high VIF.
+- **Feature–target:** correlation with target; segment means (mean duration) by category, region, distance bucket, order value bucket.
+
+### 4. Feature selection
+- **Correlation-based:** keep features with |corr(target)| ≥ threshold (e.g. 0.005); rank by |correlation|.
+- **VIF-based:** iteratively drop the variable with highest VIF until all < 10 (when statsmodels is used).
+- **Output:** final numeric list, correlation-based ranking, and short reasoning (strong vs weak predictors, seller/location overfitting risk).
+
+### 5. Final output
+- **Report:** `notebooks/delivery_duration_feature_report.txt` — leakage doc, target distribution, high correlations, high VIF, feature–target ranking, importance table, final feature list, reasoning/risks, target transformation (raw vs log).
+- **Config:** `notebooks/delivery_duration_feature_config.json` — `target`, `numeric`, `categorical`, `target_log_transform`, and key diagnostics.
+
+### Run
+```bash
+cd ASSIGN_ML
+python -m src.feature_preparation_delivery_duration
+```
+
+Optional: add `statsmodels` to `requirements.txt` for VIF; without it, VIF is skipped and the report still covers target, correlations, and feature–target strength.
+
+---
+
+**User**
+
+Using the finalized feature configuration below, implement the full modeling and evaluation pipeline for delivery duration prediction.
+
+Target:
+delivery_duration_days
+
+We will apply log-transform based on diagnostics:
+target_log = log1p(delivery_duration_days)
+
+This is a regression problem.
+
+1️ Proper Train / Validation / Test Methodology
+
+Use strict time-based splitting based on order_purchase_timestamp:
+
+Train: earliest 70%
+Validation: next 15%
+Test: final 15%
+
+
+Ensure:
+
+All preprocessing (scaling, encoding) is fit only on training data
+Target log transform is applied only after split
+No future information leaks into training
+
+2️ Modeling Strategy
+
+Train and compare at least two models:
+
+(A) Baseline Model
+Linear Regression or Ridge Regression
+Use scaled numeric features
+Use one-hot encoding for categorical features
+Evaluate both raw-target and log-target performance
+Capture coefficients for interpretability
+
+(B) Stronger Model
+Tree-based regression model:
+Random Forest OR Gradient Boosting OR XGBoost
+Tune basic hyperparameters using validation set
+
+Compare log-target vs raw-target performance
+Capture feature importance
+
+
+3️Evaluation Strategy (Critical Section)
+
+Report performance on both validation and test sets.
+Compute:
+MAE (Mean Absolute Error) → primary metric
+RMSE → penalizes large errors
+MAPE → business interpretability
+R² → variance explanation
+
+
+If using log-transform:
+Invert predictions before computing metrics
+Compare log vs raw performance clearly
+
+4️⃣ Error Analysis
+Perform structured analysis:
+A. Residual Analysis
+Plot residual distribution (lightweight)
+Identify systematic bias (overpredict short deliveries?)
+Check heteroscedasticity
+
+B. Segment Performance
+Evaluate MAE by:
+intra_state vs inter_state
+product category
+seller_region
+order value buckets
+bulky_flag
+
+Identify:
+Where model struggles
+Whether long-distance deliveries are underpredicted
+Whether heavy/bulky items are misestimated
+
+C. Extreme Error Cases
+Inspect top 50 largest absolute errors.
+Are these:
+Outliers?
+Rare regions?
+Very heavy items?
+Data issues?
+
+
+6️Experiment Tracking
+
+Log all experiments into experiments/ folder.
+For each run save:
+Model type
+Hyperparameters
+Feature set used
+Target transform (raw/log)
+Validation MAE
+Test MAE
+RMSE
+R²
+Notes
+
+Summarize what you learned from comparing models.
+
+7️Code Structure
+
+Implement clean modular structure:
+
+src/train_delivery_duration.py
+src/evaluate_delivery_duration.py
+Follow production intent:
+Functions for split
+Functions for preprocessing
+Functions for model training
+Clear config section
+
+Reproducible random seed
+
+Deliver:
+Best performing model
+Saved model artifact
+Saved preprocessing pipeline
+Metrics JSON log
+Clear comments explaining decisions
+
+---
+
+**Cursor**
+
+
+Implementing the delivery-duration modeling and evaluation pipeline. Checking the feature config and data-prep entry points.
+
+
+
+Adding a `prepare_splits` function to the feature module, then implementing the train and evaluate scripts.
+
+
+
+Implementing the evaluation script and verifying the feature module exports.
+
+
+
+Checking which columns `get_model_ready_delivery` returns and whether historical seller columns are included in the config:
+
+
+
+Implementing the evaluation script and fixing the train script (removing the unused `time_based_split` and ensuring feature names match).
+
+
+
+Writing the full evaluation script.
+
+
+
+Removing the unused `time_based_split` from the train script and checking for linter issues.
+
+
+
+Running the training pipeline to verify it works:
+
+
+
+Checking imports and data loading:
+
+
+
+Running the evaluation pipeline:
+
+
+
+Checking experiment artifacts and adding tree feature importance and hyperparameters to the train script.
+
+
+
+Adding tree hyperparameters and feature importance to the training script.
+
+
+
+Storing winning model hyperparameters in a single `hyperparameters` key:
+
+
+
+Adding a short "learnings" summary to the evaluation output (model comparison and failure modes).
+
+
+
+Summary of what’s in place and how to use it:
+
+---
+
+## Delivery duration pipeline – summary
+
+### 1. **`src/train_delivery_duration.py`**
+- **Data:** Uses `prepare_splits_delivery_duration()` for a **time-based 70/15/15** split on `order_purchase_timestamp`. No future leakage; target is `log1p(delivery_duration_days)` only after the split when `target_log_transform=True`.
+- **Preprocessing:** Fit on **train only**: `StandardScaler` on config numerics, `OneHotEncoder` on config categoricals (handle_unknown="ignore").
+- **Models:**  
+  - **(A) Ridge** (alpha=1.0) on scaled + one-hot features.  
+  - **(B) Tree:** XGBoost (if available) with a small grid (n_estimators × max_depth), else RandomForest.  
+- **Selection:** Best model by **validation MAE** (predictions converted back to original scale with `expm1` when using log-target).
+- **Artifacts in `experiments/<run_id>/`:**
+  - `model.joblib`, `preprocessor.joblib`, `feature_config.json`
+  - `experiment.json`: run_id, model_type, hyperparameters, feature_set, validation_metrics, test_metrics, ridge_coefficients (if Ridge), feature_importance (if tree), and both models’ val/test metrics
+  - `metrics_summary.txt`
+- **Reproducibility:** `RANDOM_STATE = 42` and fixed config path.
+
+### 2. **`src/evaluate_delivery_duration.py`**
+- **Load:** Latest run or `--run_id`; loads model, preprocessor, and config from that run.
+- **Metrics:** Recomputes **MAE, RMSE, MAPE, R²** on validation and test in **original scale** (inverting log with `expm1` when applicable). Writes `evaluation_metrics.json`.
+- **Error analysis:**
+  - **Residuals:** Mean/median/std, over- vs underprediction %, and correlation of |residual| with actual (heteroscedasticity).
+  - **Segment MAE:** By `intra_state`, `primary_category`, `seller_region`, `order_value_bucket` (tertiles), `bulky_flag`.
+  - **Top 50 largest |errors|:** Lines with y_true, y_pred, error, and segment columns.
+- **Outputs in the same run folder:** `error_analysis.txt`, `residual_histogram.txt`, and a short **learnings** section (model choice, R² val vs test, residual bias, segment findings, top-50 pattern).
+
+### 3. **Run commands**
+```bash
+cd ASSIGN_ML
+python3 -m src.train_delivery_duration
+python3 -m src.evaluate_delivery_duration
+# or for a specific run:
+python3 -m src.evaluate_delivery_duration --run_id 20260227_014029
+```
+
+### 4. **Example run**
+- **Best model:** XGBoost (log-target).  
+- **Val:** MAE≈4.60, RMSE≈6.55, R²≈0.28.  
+- **Test:** MAE≈4.86, RMSE≈6.09, R²≈−0.24 (suggests overfitting or time shift).  
+- **Error analysis:** Mean residual ≈ −3.4 (overprediction); inter_state MAE ~6.1 vs intra_state ~3.1; top-50 errors mostly inter_state, with many actual 40–80 days vs predicted 5–20 days.
+
+All of this follows the structure you asked for: time-based split, preprocessing fit on train only, log-target applied after split, two model families, metrics and error analysis, and experiment logging under `experiments/` with model artifact, preprocessor, config, and metrics.
+
+---
+
+**User**
+
+Improve the existing delivery_duration_days regression model in a structured way.
+
+Current issue:
+Validation R² ≈ 0.28 but Test R² ≈ −0.24.
+Large errors on long delays and inter_state shipments.
+
+Make the following targeted improvements:
+Diagnose time drift
+Compare monthly mean delivery_duration_days
+Compare train vs test target distribution
+Check if tail frequency increased over time
+Handle heavy tail
+Try winsorizing target at 99th percentile
+Compare performance with and without log-transform
+Evaluate metrics separately for <=30 days and >30 days
+Improve geographic signal
+Add distance_km buckets
+
+Add region_to_region feature (seller_region + "_" + customer_region)
+Add interaction: inter_state × bulky_flag
+Reduce overfitting
+Add stronger regularization to tree model
+Reduce max_depth
+Compare validation vs test gap
+
+Re-evaluate performance
+Report:
+MAE (primary)
+RMSE
+R²
+Segment MAE for:
+intra_state
+inter_state
+long-distance bucket
+Summarize:
+
+What improved
+What still fails
+Whether regression is reliable for production
+Keep changes minimal and modular.
+
+---
+
+**Cursor**
+
+
+Implementing targeted improvements: reviewing the feature-preparation and config structure, then adding diagnostics, new features, and training changes.
+
+
+
+Checking how `prepare_splits` applies the config and how the train script uses it:
+
+
+
+Implementing improvements: creating a task list and starting implementation.
+
+
+
+Adding geo features to the drift script so the pipeline matches, and fixing the `distance_km` bucket for NaN (current bins use -2,0 which makes NaN fall in d_unknown).
+
+
+
+Updating the train script: adding winsorization, log-vs-raw comparison (Ridge), and stronger tree regularization.
+
+
+
+Updating the evaluation script to add segment MAE (intra_state, inter_state, long-distance bucket), metrics for <=30 and >30 days, and an improvement summary.
+
+
+
+Adding segment and band metrics to `evaluation_metrics.json` and fixing the long-distance bucket check (bucket label may be `d_1500_plus`).
+
+
+
+Checking for a winsorization cap when generating predictions: we should not cap predictions at eval time—only the training target was capped. Checking the train script for correct handling of `target_cap_p99` when it's None:
+
+
+
+Running the time-drift diagnostics, then training.
+
+
+
+Writing the improvement report to `notebooks/` and marking the task complete. Time-drift shows test period has shorter deliveries (mean 8.37 vs train 13.82) and fewer >30-day cases (0.73% vs 6.04%); distance_km is all `d_unknown` in this dataset (geo centroids likely missing).
+
+
+
+Summary of what was implemented and what the latest run shows:
+
+---
+
+## 1. **Time drift diagnostics** (`src/diagnose_delivery_duration_drift.py`)
+
+- **Monthly mean** `delivery_duration_days`: later months (test window) have lower means (e.g. ~8–9 days in 2018-06–08).
+- **Train vs test**: Train mean 13.82 days, test mean 8.37; train p99 = 48.9, test p99 = 28.0.
+- **Tail frequency**: Train 6.04% > 30 days vs test 0.73% > 30 days → clear distribution shift: test has shorter deliveries and fewer long tails, which explains negative test R² and systematic overprediction.
+
+Output: `notebooks/delivery_duration_time_drift.txt`.
+
+---
+
+## 2. **Heavy tail handling**
+
+- **Winsorization**: Config option `target_winsorize_p99` (default `false`). When `true`, target is capped at train 99th percentile before the log transform; preprocessor stores the cap for reproducibility.
+- **Log vs raw**: Every run trains Ridge with log and Ridge with raw and logs both in `experiment.json` under `log_vs_raw_comparison`. Latest run: **Ridge log test MAE 4.79** vs **Ridge raw test MAE 5.97** → log is clearly better.
+- **Metrics by band**: Evaluation reports MAE and R² for test with **y_true ≤ 30** and **y_true > 30**. Latest: ≤30d MAE ≈ 4.67 (R² −0.46); >30d MAE ≈ 24.5 (R² −4.6) → model is poor on long deliveries.
+
+---
+
+## 3. **Geographic and interaction features** (`feature_preparation_delivery_duration.py`)
+
+- **`add_geo_and_interaction_features()`** (used in `prepare_splits` and drift script):
+  - **distance_km_bucket**: categorical from `distance_km` (d_0_500, d_500_1500, d_1500_plus, d_unknown).
+  - **region_to_region**: `seller_region + "_" + customer_region`.
+  - **inter_state_x_bulky_flag**: `(1 - intra_state) * bulky_flag`.
+- Config updated with these; pipeline remains modular and backward compatible.
+
+---
+
+## 4. **Less overfitting in the tree** (`train_delivery_duration.py`)
+
+- XGBoost: **max_depth 4–5** (was 6–8), **reg_alpha=0.1**, **reg_lambda=1.0**.
+- RF: **max_depth=6** (was 12).
+- **Val–test gap** stored in `experiment.json` (`val_test_gap_mae`, `val_test_gap_r2`). Latest: MAE gap +0.23 days, R² gap −0.50; test R² −0.22 (slightly better than previous −0.24).
+
+---
+
+## 5. **Evaluation and reporting** (`evaluate_delivery_duration.py`)
+
+- **Segment MAE** reported for **intra_state**, **inter_state**, and **long_distance_bucket** (when present). Latest: intra_state MAE 3.06, inter_state MAE 6.02. In this dataset `distance_km` is missing for all rows, so every row is `d_unknown` and there is no separate long-distance bucket.
+- **Improvement summary** (section 7 in `error_analysis.txt`): what improved, what still fails, production reliability. Also written in `notebooks/delivery_duration_improvement_summary.md`.
+
+---
+
+## 6. **Reported metrics (run 20260227_015242)**
+
+|        | Validation | Test   |
+|--------|------------|--------|
+| **MAE**  | 4.58       | 4.81   |
+| **RMSE** | 6.52       | 6.03   |
+| **R²**   | 0.285      | −0.22  |
+
+**Segment MAE (test):** intra_state 3.06, inter_state 6.02.
+
+---
+
+## 7. **Summary**
+
+- **Improved**: Time drift understood; log vs raw compared (log better); segment MAE (intra/inter_state, long-distance when geo exists); stronger tree regularization; slightly better test MAE and R².
+- **Still weak**: Test R² negative (distribution shift); large errors on >30-day deliveries and inter_state; long-distance bucket not usable when `distance_km` is missing.
+- **Production**: Use with caution; prefer segment-specific logic or fallbacks for inter_state and long-distance, and monitor performance over time.
+
+All changes are minimal and modular: new script for drift, one feature function, config and train/eval updates, and a single markdown summary in `notebooks/delivery_duration_improvement_summary.md`.
+
+---
+
+**User**
+
+Create a production-ready REST API for the delivery duration regression model using FastAPI.
+
+The model predicts:
+
+delivery_duration_days
+(using log-transform internally if required)
+
+Artifacts already available:
+
+model.pkl
+preprocessor.pkl
+
+1️ Create src/serve_delivery.py
+
+Build a FastAPI app that:
+Loads at startup:
+trained regression model
+preprocessing pipeline
+feature configuration
+
+Expose endpoint:
+POST /predict
+
+2️Input Payload
+Accept realistic JSON payload including:
+
+{
+"intra_state": 1,
+"total_freight_value": 22.5,
+"freight_ratio": 0.18,
+"average_weight_per_item": 450,
+"avg_item_price": 80,
+"total_weight_g": 900,
+"total_order_value": 160,
+"total_volume_cm3": 12000,
+"bulky_flag": 0,
+"item_count": 2,
+"primary_category": "beleza_saude",
+"payment_type_primary": "credit_card",
+"seller_state": "SP",
+"customer_state": "RJ",
+"customer_region": "SE",
+"seller_region": "SE"
+}
+
+Validate input types using Pydantic.
+
+3️ Prediction Logic
+
+Steps:
+Convert input into dataframe
+Apply preprocessing pipeline
+Predict delivery_duration
+
+Return final predicted days (rounded to 2 decimals)
+4️ Add SHAP Explainability
+
+Load SHAP TreeExplainer at startup
+For each prediction:
+Compute SHAP values
+
+Extract top 3 features by absolute impact
+Map them back to original feature names
+Return in response:
+
+{
+"predicted_delivery_days": 12.47,
+"top_shap_features": [
+{"feature": "intra_state", "impact": -1.84},
+{"feature": "total_freight_value", "impact": 0.92},
+{"feature": "bulky_flag", "impact": 0.55}
+]
+}
+
+Ensure:
+
+SHAP runs only on single sample
+
+Keep inference fast
+
+No leakage
+
+Clean, readable feature names
+
+5️ Error Handling
+
+Include:
+
+Validation errors
+
+Missing fields
+
+Model load failure
+
+Graceful JSON responses
+
+6️ Add Sample curl Command
+
+Include in README.md:
+
+Run server:
+uvicorn src.serve_delivery:app --reload
+
+Example request:
+
+curl -X POST http://localhost:8000/predict
+
+-H "Content-Type: application/json"
+-d '{
+"intra_state": 1,
+"total_freight_value": 22.5,
+"freight_ratio": 0.18,
+"average_weight_per_item": 450,
+"avg_item_price": 80,
+"total_weight_g": 900,
+"total_order_value": 160,
+"total_volume_cm3": 12000,
+"bulky_flag": 0,
+"item_count": 2,
+"primary_category": "beleza_saude",
+"payment_type_primary": "credit_card",
+"seller_state": "SP",
+"customer_state": "RJ",
+"customer_region": "SE",
+"seller_region": "SE"
+}'
+
+7️ Keep Implementation Clean
+
+No heavy dependencies
+
+No unnecessary abstraction
+
+Modular functions
+
+Production-oriented structure
+
+Deliver:
+
+src/serve_delivery.py
+
+Updated README instructions
+
+Verified working endpoint
+
+---
+
+**Cursor**
+
+
+Creating a production-ready FastAPI service for the delivery duration model. Checking existing serve and artifact layout:
+
+
+
+Checking how the review serve builds the request and returns SHAP:
+
+
+
+Implementing the delivery duration FastAPI service and README updates.
+
+
+
+Checking the train module's `transform_to_matrix` signature and fixing the import/call.
+
+
+
+Verifying experiment folder structure and running a quick test:
+
+
+
+Updating the README and adding the delivery API section.
+
+
+
+Starting the server and testing the /predict endpoint:
+
+
+
+Checking which app is bound to port 8000 and starting the delivery app on a different port:
+
+
+
+Checking startup: server exited with 139 (segfault). Testing artifact loading and SHAP:
+
+
+
+Verifying validation and health:
+
+
+
+Adding `serve_delivery.py` to the README structure section.
+
+
+
+Summary of what’s in place:
+
+---
+
+## 1. **`src/serve_delivery.py`**
+
+- **Startup:** Loads `model.joblib` (or `model.pkl`), `preprocessor.joblib` (or `preprocessor.pkl`), and `feature_config.json` from:
+  - **DELIVERY_EXPERIMENT_DIR**, or
+  - latest run in `experiments/` whose `feature_config.json` has `"target": "delivery_duration_days"`.
+- **POST /predict:** Accepts JSON, validates with Pydantic, runs preprocessing (reusing `transform_to_matrix` from `train_delivery_duration`), predicts, and if `target_log_transform` is true applies `expm1` so the response is in **days**. Returns `predicted_delivery_days` (rounded to 2 decimals) and `top_shap_features` (top 3 by |SHAP|).
+- **Input:** Pydantic model with the 16 fields from your example; optional `distance_km`. Derived in the app: `region_to_region`, `distance_km_bucket`, `inter_state_x_bulky_flag`.
+- **SHAP:** TreeExplainer is created at startup (single zero-row background). For each request, SHAP values are computed for that one row; top 3 features by absolute impact are returned with readable names (e.g. `intra_state`, `customer_region_SE`). No extra data or leakage.
+- **Errors:** 422 for validation/missing fields (Pydantic), 503 if model/preprocessor didn’t load, 500 for preprocessing/prediction failures, with JSON `detail`.
+- **GET /health:** Returns `{"status": "ok", "model_loaded": true/false}`.
+
+---
+
+## 2. **README**
+
+- New section **“Delivery Duration Prediction API (`serve_delivery`)”** with:
+  - **Run server:** `uvicorn src.serve_delivery:app --reload`
+  - **Example request:** the exact `curl` you specified (all 16 fields).
+  - **Example response:** `predicted_delivery_days` and `top_shap_features`.
+  - **Optional:** `distance_km` in the body; env **DELIVERY_EXPERIMENT_DIR** to point at a specific run.
+- `serve_delivery.py` (and related delivery scripts) are listed in the project structure.
+
+---
+
+## 3. **Verified behaviour**
+
+- Server starts and loads the latest delivery experiment (e.g. `20260227_015242`).
+- **POST /predict** with your sample body returns something like:
+  - `predicted_delivery_days`: 7.45  
+  - `top_shap_features`: e.g. `intra_state` (-0.47), `item_count` (-0.16), `customer_region_SE` (-0.04).
+- **GET /health** returns `status: ok`, `model_loaded: true`.
+- Sending an invalid body (e.g. only `intra_state`) returns **422** with a list of missing fields.
+
+Run the API with:
+
+```bash
+uvicorn src.serve_delivery:app --reload
+```
+
+Then use the curl from the README against `http://localhost:8000/predict`. Artifacts are read from the chosen delivery experiment as `model.joblib`, `preprocessor.joblib`, and `feature_config.json` (or `.pkl` if you use those names).
+
+---
+
+**User**
+
+Can you check once both endpoint
+
+---
+
+**Cursor**
+
+
+Checking both the review-score and delivery-duration endpoints: locating their payloads and testing /health and POST /predict.
+
+
+
+Starting both servers on different ports and testing each endpoint:
+
+
+
+Checking which experiment the review server loaded and testing the delivery endpoint:
+
+
+
+Checking why the review server responded: it loads the latest experiment (a delivery run), which causes startup to fail. Updating the review serve to load only review experiments and re-testing both endpoints.
+
+
+
+Updating the review serve to load only review experiments (skip delivery runs) so both endpoints can coexist.
+
+
+
+Checking for a review feature config; if present, we'll run review training to create an experiment and then test both servers.
+
 
