@@ -35,11 +35,17 @@ except ImportError:
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 EXPERIMENTS_DIR = PROJECT_ROOT / "exports" / "experiments"
 
-# So joblib can unpickle _LabelEncodedModel saved by train.py
+# So joblib can unpickle _LabelEncodedModel saved by train.py (class may be stored as __main__._LabelEncodedModel)
 try:
     from src.train import _LabelEncodedModel  # noqa: F401
 except ImportError:
     from train import _LabelEncodedModel  # noqa: F401
+
+def _register_label_encoded_model_for_unpickle():
+    """When run via 'python -m uvicorn', __main__ is uvicorn; register our class so joblib finds it."""
+    import sys
+    if "__main__" in sys.modules:
+        sys.modules["__main__"]._LabelEncodedModel = _LabelEncodedModel
 
 # ---------------------------------------------------------------------------
 # App and global model state (loaded once at startup)
@@ -79,6 +85,7 @@ def _get_experiment_dir() -> Path:
 def _load_model_and_preprocessor():
     """Load model, preprocessor, config; build feature name list for SHAP."""
     global _model, _preprocessor, _config, _feature_names_out, _shap_explainer, _shap_model_raw
+    _register_label_encoded_model_for_unpickle()
     exp_dir = _get_experiment_dir()
     model_path = exp_dir / "model.joblib" if (exp_dir / "model.joblib").exists() else exp_dir / "model.pkl"
     prep_path = exp_dir / "preprocessor.joblib" if (exp_dir / "preprocessor.joblib").exists() else exp_dir / "preprocessor.pkl"
@@ -266,10 +273,15 @@ def _top_shap_features(X: np.ndarray, predicted_class_index: int) -> list[dict]:
 # ---------------------------------------------------------------------------
 # Response schema
 # ---------------------------------------------------------------------------
+class ShapFeature(BaseModel):
+    feature: str
+    impact: float
+
+
 class PredictResponse(BaseModel):
     predicted_review_score: int
     class_probabilities: dict[str, float]
-    top_shap_features: list[dict[str, float]] = []
+    top_shap_features: list[ShapFeature] = []
 
 
 @app.post("/predict", response_model=PredictResponse)
