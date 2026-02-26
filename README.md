@@ -11,7 +11,8 @@ src/
 ├── serve.py                        # FastAPI prediction service
 ├── feature_preparation_review.py   # Feature pipeline and config
 ├── data.py                         # Raw data loading
-experiments/                        # One folder per run (model, preprocessor, config, reports)
+exports/
+└── experiments/                    # One folder per run (model, preprocessor, config, reports)
 notebooks/                          # EDA, feature config, reports
 ```
 
@@ -45,7 +46,7 @@ pip install pandas numpy scikit-learn xgboost fastapi uvicorn pydantic joblib sh
 
 ## Prediction API (serve)
 
-Loads **model** and **preprocessor** from `experiments/` (looks for `model.joblib` / `model.pkl` and `preprocessor.joblib` / `preprocessor.pkl` in the latest run, or in `EXPERIMENT_DIR` if set).
+Loads **model** and **preprocessor** from `exports/experiments/` (looks for `model.joblib` / `model.pkl` and `preprocessor.joblib` / `preprocessor.pkl` in the latest run, or in `EXPERIMENT_DIR` if set).
 
 ### Run the server
 
@@ -101,13 +102,13 @@ Example response:
 
 ### Optional environment
 
-- **EXPERIMENT_DIR** – Path to experiment folder (default: latest under `experiments/`).
+- **EXPERIMENT_DIR** – Path to experiment folder (default: latest under `exports/experiments/`).
 
 Artifacts written by training are `model.joblib` and `preprocessor.joblib`; the server also accepts `model.pkl` and `preprocessor.pkl` if you provide them (e.g. by copying or symlinking).
 
 ## Docker
 
-The API can run in a container. The image expects **experiments/final_model/** to contain:
+The API can run in a container. The image expects **exports/experiments/final_model/** to contain:
 
 - `model.joblib` (or `model.pkl`)
 - `preprocessor.joblib` (or `preprocessor.pkl`)
@@ -116,10 +117,10 @@ The API can run in a container. The image expects **experiments/final_model/** t
 Copy (or symlink) your chosen run into `final_model` before building:
 
 ```bash
-mkdir -p experiments/final_model
-cp experiments/<run_id>/model.joblib experiments/final_model/
-cp experiments/<run_id>/preprocessor.joblib experiments/final_model/
-cp experiments/<run_id>/feature_config.json experiments/final_model/
+mkdir -p exports/experiments/final_model
+cp exports/experiments/<run_id>/model.joblib exports/experiments/final_model/
+cp exports/experiments/<run_id>/preprocessor.joblib exports/experiments/final_model/
+cp exports/experiments/<run_id>/feature_config.json exports/experiments/final_model/
 ```
 
 Build and run:

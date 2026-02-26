@@ -38,7 +38,7 @@ except ImportError:
         PROJECT_ROOT,
     )
 
-EXPERIMENTS_DIR = PROJECT_ROOT / "experiments"
+EXPERIMENTS_DIR = PROJECT_ROOT / "exports" / "experiments"
 CONFIG_PATH = PROJECT_ROOT / "notebooks" / "review_feature_config.json"
 
 # ---------------------------------------------------------------------------
@@ -252,7 +252,7 @@ def run_training(config_path=None):
     - Load config and prepare train/val/test (time-based, leakage-safe features).
     - Fit preprocessor on train only.
     - Train baseline LR and stronger model; compare on validation macro-F1.
-    - Save best model and artifacts to experiments/<run_id>.
+    - Save best model and artifacts to exports/experiments/<run_id>.
     """
     EXPERIMENTS_DIR.mkdir(parents=True, exist_ok=True)
     run_id = datetime.now().strftime("%Y%m%d_%H%M%S")

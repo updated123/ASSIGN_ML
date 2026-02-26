@@ -1,12 +1,12 @@
 """
 Production FastAPI service for multi-class review score prediction.
 
-Loads model and preprocessor from experiments/ at startup (model.joblib / model.pkl,
+Loads model and preprocessor from exports/experiments/ at startup (model.joblib / model.pkl,
 preprocessor.joblib / preprocessor.pkl). Exposes POST /predict with Pydantic validation,
 optional SHAP explainability for tree-based models, and structured error handling.
 
 Assumptions:
-- Experiment dir is chosen via env EXPERIMENT_DIR or latest run in experiments/.
+- Experiment dir is chosen via env EXPERIMENT_DIR or latest run in exports/experiments/.
 - Request payload may omit historical aggregates and primary_seller_id; defaults applied.
 - late_freight_ratio is derived as late_delivery_flag * freight_ratio (no leakage).
 """
@@ -33,7 +33,7 @@ except ImportError:
             return pickle.load(f)
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
-EXPERIMENTS_DIR = PROJECT_ROOT / "experiments"
+EXPERIMENTS_DIR = PROJECT_ROOT / "exports" / "experiments"
 
 # So joblib can unpickle _LabelEncodedModel saved by train.py
 try:
@@ -66,7 +66,7 @@ def _get_experiment_dir() -> Path:
             return p
         return PROJECT_ROOT / p
     if not EXPERIMENTS_DIR.exists():
-        raise FileNotFoundError("experiments/ not found; run training first.")
+        raise FileNotFoundError("exports/experiments/ not found; run training first.")
     dirs = sorted(EXPERIMENTS_DIR.glob("*"), key=lambda x: x.name, reverse=True)
     for d in dirs:
         if not d.is_dir():
