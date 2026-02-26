@@ -1,0 +1,58 @@
+============================================================
+ERROR ANALYSIS
+============================================================
+
+A. CONFUSION PATTERNS
+----------------------------------------
+  True 1 -> Pred 2: 104 (10.2% of true 1)
+  True 1 -> Pred 3: 168 (16.5% of true 1)
+  True 1 -> Pred 4: 168 (16.5% of true 1)
+  True 1 -> Pred 5: 276 (27.0% of true 1)
+  True 2 -> Pred 1: 82 (23.4% of true 2)
+  True 2 -> Pred 3: 64 (18.2% of true 2)
+  True 2 -> Pred 4: 71 (20.2% of true 2)
+  True 2 -> Pred 5: 106 (30.2% of true 2)
+  True 3 -> Pred 1: 130 (13.2% of true 3)
+  True 3 -> Pred 2: 73 (7.4% of true 3)
+  True 3 -> Pred 4: 240 (24.4% of true 3)
+  True 3 -> Pred 5: 343 (34.9% of true 3)
+  True 4 -> Pred 1: 231 (8.5% of true 4)
+  True 4 -> Pred 2: 157 (5.8% of true 4)
+  True 4 -> Pred 3: 576 (21.2% of true 4)
+  True 4 -> Pred 5: 1017 (37.5% of true 4)
+  True 5 -> Pred 1: 593 (6.4% of true 5)
+  True 5 -> Pred 2: 520 (5.6% of true 5)
+  True 5 -> Pred 3: 1768 (19.0% of true 5)
+  True 5 -> Pred 4: 2450 (26.3% of true 5)
+
+  3-star confused as 4-star: 240 (of 984 true 3s)
+  4-star confused as 3-star: 576 (of 2713 true 4s)
+
+  Extremes (1,5) vs middle (2,3,4):
+    Score 1: correct=305, total=1021, recall=29.87%
+    Score 5: correct=3975, total=9306, recall=42.71%
+
+B. SEGMENT PERFORMANCE (macro F1 or recall by segment)
+----------------------------------------
+  late_delivery_flag=0: n=13439, macro_f1=0.2084, recall_class1~0.0824
+  late_delivery_flag=1: n=936, macro_f1=0.0823, recall_class1~0.9877
+  order_value_bucket=val_q0: n=3586, macro_f1=0.2171
+  order_value_bucket=val_q2: n=3588, macro_f1=0.2395
+  order_value_bucket=val_q3: n=3660, macro_f1=0.2391
+  order_value_bucket=val_q1: n=3541, macro_f1=0.2254
+  primary_category=beleza_saude: n=1713, macro_f1=0.2357
+  primary_category=cama_mesa_banho: n=1235, macro_f1=0.1732
+  primary_category=utilidades_domesticas: n=1128, macro_f1=0.2448
+  primary_category=relogios_presentes: n=1011, macro_f1=0.2471
+  primary_category=esporte_lazer: n=960, macro_f1=0.2274
+
+C. FAILURE MODE ANALYSIS
+----------------------------------------
+  Per-class recall (1-star most critical for intervention):
+    Score 1: recall=0.2987
+    Score 2: recall=0.0798
+    Score 3: recall=0.2012
+    Score 4: recall=0.2698
+    Score 5: recall=0.4271
+  Rare classes (1,2) often have lower recall; class_weight helps but may still lag.
+  If late_delivery_flag is a top feature, model may over-rely on it; check feature importance.

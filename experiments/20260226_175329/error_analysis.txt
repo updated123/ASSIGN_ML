@@ -1,0 +1,52 @@
+============================================================
+ERROR ANALYSIS
+============================================================
+
+A. CONFUSION PATTERNS
+----------------------------------------
+  3-star predicted as 4-star: 256 (of 984 true 3s)
+  4-star predicted as 3-star: 459 (of 2713 true 4s)
+  1-star predicted as 2-star: 73 (of 1021 true 1s)
+  2-star predicted as 1-star: 90 (of 351 true 2s)
+  Extreme classes (1,5) vs middle (2,3,4):
+    Score 1: 345 correct / 1021 (33.8%)
+    Score 2: 20 correct / 351 (5.7%)
+    Score 3: 178 correct / 984 (18.1%)
+    Score 4: 676 correct / 2713 (24.9%)
+    Score 5: 4434 correct / 9306 (47.6%)
+
+B. SEGMENT PERFORMANCE
+----------------------------------------
+  By Late vs on-time:
+    0: n=13439, macro-F1=0.2185
+    1: n=936, macro-F1=0.2341
+  By Order value bucket:
+    val_q0: n=3586, macro-F1=0.2401
+    val_q2: n=3588, macro-F1=0.2457
+    val_q3: n=3660, macro-F1=0.2457
+    val_q1: n=3541, macro-F1=0.2342
+  By Primary category:
+    utilidades_domesticas: n=1128, macro-F1=0.2529
+    beleza_saude: n=1713, macro-F1=0.2519
+    malas_acessorios: n=120, macro-F1=0.3295
+    esporte_lazer: n=960, macro-F1=0.2480
+    eletrodomesticos_2: n=45, macro-F1=0.2491
+    bebidas: n=46, macro-F1=0.1723
+    informatica_acessorios: n=872, macro-F1=0.2180
+    consoles_games: n=118, macro-F1=0.2517
+    moveis_decoracao: n=774, macro-F1=0.2228
+    perfumaria: n=395, macro-F1=0.2562
+    (showing first 10 segments only)
+  1-star recall (late=0): 137 / 777 = 0.18
+  1-star recall (late=1): 208 / 244 = 0.85
+
+C. FAILURE MODE ANALYSIS
+----------------------------------------
+  Total errors: 8722 / 14375 (60.7%)
+  Error rate by true class:
+    True 1: 66.2% wrong
+    True 2: 94.3% wrong
+    True 3: 81.9% wrong
+    True 4: 75.1% wrong
+    True 5: 52.4% wrong
+  When late=1, model predicts low (1-3): 758 / 936 = 0.81

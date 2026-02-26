@@ -1,0 +1,14 @@
+# Exclude other experiment runs; only experiments/final_model/ is copied
+experiments/*
+!experiments/final_model/
+
+# Development and data
+.git
+__pycache__
+*.pyc
+.pytest_cache
+.mypy_cache
+data/
+notebooks/
+*.md
+!README.md

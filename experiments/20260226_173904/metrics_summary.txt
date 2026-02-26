@@ -1,0 +1,12 @@
+Run: 20260226_173904
+Model: multinomial_lr
+Test accuracy: 0.3644
+Test macro F1 (primary): 0.2336
+Test weighted F1: 0.4126
+Test macro ROC-AUC (OvR): 0.5730
+Per-class recall:
+  Score 1: 0.2987
+  Score 2: 0.0798
+  Score 3: 0.2012
+  Score 4: 0.2698
+  Score 5: 0.4271

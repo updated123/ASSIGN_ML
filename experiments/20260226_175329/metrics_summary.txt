@@ -1,0 +1,4 @@
+Run: 20260226_175329
+Model: xgboost
+Val  - Accuracy: 0.4680  Macro-F1: 0.2740  Weighted-F1: 0.4805
+Test - Accuracy: 0.3933  Macro-F1: 0.2430  Weighted-F1: 0.4346

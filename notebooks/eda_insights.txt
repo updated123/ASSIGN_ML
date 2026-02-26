@@ -1,0 +1,69 @@
+================================================================================
+Marketplace EDA – Structured Insights Report
+================================================================================
+
+1. MAIN PATTERNS OBSERVED
+------------------------------------------------------------
+- Order status is dominated by 'delivered'; other statuses are minority.
+- Review scores are integer 1-5 only (one per order, latest review); right-skewed (many 4-5); low scores (1-3) are a minority.
+- Delivery delay (delivered vs estimated date) shows a meaningful late rate.
+- Payment mix is concentrated in credit_card and boleto.
+- Order value, freight, and item count have positive skew (long upper tails).
+- Review coverage among delivered orders is high but not 100%.
+
+2. KEY OPERATIONAL DRIVERS
+------------------------------------------------------------
+- Delivery performance (on-time vs late) drives review scores (late -> lower scores).
+- Category and seller identity are strong drivers of late delivery rate.
+- Order size (item count, value, freight) may correlate with delay and satisfaction.
+- Time (year/month) reflects seasonality and growth.
+
+3. STRONGEST RELATIONSHIPS DISCOVERED
+------------------------------------------------------------
+- Late delivery vs review: late orders mean score 2.56 vs on-time 4.29.
+- Order value and freight are highly correlated (freight scales with value/category).
+- Late rate varies by product category and by seller (actionable levers).
+
+4. UNEXPECTED FINDINGS
+------------------------------------------------------------
+- Some orders have multiple payment types (payment_type_list); primary used for EDA.
+- Negative delivery_delay_days (early delivery) are common; late = positive delay.
+- Review coverage < 100% implies missing-not-at-random risk for review models.
+
+5. POTENTIAL ML PROBLEM CANDIDATES
+------------------------------------------------------------
+
+  (A) Late delivery prediction (binary: late_delivery_flag)
+      Target: order delivered after estimated_delivery_date. Positive rate ~ 8.1%.
+      Strengths: Clear target; rich features (category, seller, value, time).
+      Weaknesses: Label only known after delivery; possible data quality in dates.
+      Modeling risks: Temporal leakage if not split by time; seller/category imbalance.
+
+  (B) Low review score prediction (e.g. score <= 3 vs 4-5)
+      Target: review_score <= 3. Positive rate (low) ~ 22.9%; high (4-5) ~ 77.1%.
+      Strengths: Direct customer satisfaction signal; link to delivery and order features.
+      Weaknesses: Missing reviews (coverage 99.3%); possible non-response bias.
+      Modeling risks: Class imbalance (few low scores); text/comment not used in this EDA.
+
+  CLASS IMBALANCE (review score)
+------------------------------------------------------------
+  - Corrected distribution uses integer scores 1-5 only (latest review per order; no averaging).
+  - Counts: Score 1: 11364, Score 2: 3129, Score 3: 8133, Score 4: 19045, Score 5: 57002.
+  - Binary low (1-3) vs high (4-5): minority class ~22.9%; majority ~77.1%.
+  - Implications: (1) Binary classifiers may need class weight or resampling to avoid predicting majority always. (2) Multi-class (5-way) is heavily imbalanced (Score 5 dominates); consider macro F1 or per-class metrics. (3) Rare scores (1, 2) are hardest to predict; more data or focal loss may help.
+
+  (C) Order value prediction (regression or segment)
+      Target: total_order_value (continuous) or high-value segment.
+      Strengths: Strong business actionability; item_count and category are strong signals.
+      Weaknesses: Payment value may double-count with item price; multi-item aggregation.
+      Modeling risks: Heavy tail; need train/val split by time.
+
+6. KEY NUMERICAL FINDINGS (from EDA)
+------------------------------------------------------------
+  Total orders: 99441
+  Delivered: 96478; review coverage: 99.33%
+  Delivery delay: mean=-11.18 days, late rate=8.11%
+  Review: low (1-3) ~22.9%, high (4-5) ~77.1%
+  Order value: mean=160.99, median=105.29
+  Item count: mean=1.13, max=21
+

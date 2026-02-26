@@ -1,0 +1,23 @@
+PRACTICAL LIMITATIONS
+============================================================
+
+1. Class imbalance (5-star dominant ~58%)
+   - Model may under-predict rare classes (1, 2). Per-class recall for 1-star
+     is critical; monitor it in production.
+
+2. Subjective nature of reviews
+   - Same experience can yield 4 vs 5; label noise limits ceiling.
+
+3. Possible non-response bias
+   - Not all delivered orders have reviews; reviewers may differ from non-reviewers.
+
+4. Seller-level skew
+   - Many sellers with few orders; historical aggregates can be noisy for them.
+
+5. Temporal drift risk
+   - Behavior and mix can change; retrain periodically and monitor macro-F1.
+
+When predictions should NOT be fully trusted:
+ - New sellers/categories (no or little history).
+ - Rare segments (e.g. very high order value, unusual category).
+ - If per-class recall for 1-star is low, do not rely on model to flag all bad reviews.

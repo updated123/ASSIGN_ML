@@ -1,0 +1,51 @@
+{
+  "target": "review_score",
+  "numeric": [
+    "total_order_value",
+    "freight_ratio",
+    "item_count",
+    "approval_delay_hours",
+    "delivery_delay_days",
+    "late_delivery_flag",
+    "late_freight_ratio",
+    "seller_hist_avg_review",
+    "seller_hist_1star_rate",
+    "seller_hist_5star_rate",
+    "category_hist_avg_review",
+    "category_hist_dissatisfaction_rate"
+  ],
+  "categorical_onehot": [
+    "primary_category",
+    "seller_state",
+    "customer_state",
+    "payment_type_primary",
+    "order_value_bucket",
+    "freight_ratio_bucket",
+    "delivery_delay_bucket"
+  ],
+  "categorical_ordinal": [
+    "primary_seller_id"
+  ],
+  "quantile_edges": {
+    "value_edges": [
+      0.0,
+      61.59,
+      103.99000000000001,
+      175.1225,
+      10000000000.0
+    ],
+    "freight_ratio_edges": [
+      -0.01,
+      0.1371,
+      0.2323,
+      1.5
+    ],
+    "delivery_delay_edges": [
+      -10000000000.0,
+      -16.0,
+      -11.98,
+      -7.04,
+      10000000000.0
+    ]
+  }
+}

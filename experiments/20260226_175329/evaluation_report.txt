@@ -1,0 +1,22 @@
+============================================================
+REVIEW SCORE – EVALUATION REPORT (TEST SET)
+============================================================
+
+Accuracy (reference only): 0.3933
+Macro F1 (primary):         0.2430
+Weighted F1:               0.4346
+Macro ROC-AUC (OvR):       0.5657
+
+Per-class precision / recall / F1:
+  Score 1: P=0.2552  R=0.3379  F1=0.2908
+  Score 2: P=0.0254  R=0.0570  F1=0.0351
+  Score 3: P=0.0803  R=0.1809  F1=0.1112
+  Score 4: P=0.1878  R=0.2492  F1=0.2142
+  Score 5: P=0.6909  R=0.4765  F1=0.5640
+
+Confusion matrix (rows=true, cols=pred):
+[[ 345   73  136  182  285]
+ [  90   20   59   65  117]
+ [ 127   70  178  256  353]
+ [ 193  156  459  676 1229]
+ [ 597  468 1386 2421 4434]]

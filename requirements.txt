@@ -1,0 +1,11 @@
+pandas>=1.0
+numpy>=1.18
+scikit-learn>=1.0
+joblib>=1.0
+imbalanced-learn>=0.9
+fastapi>=0.95
+uvicorn[standard]>=0.20
+pydantic>=1.10
+xgboost>=1.5
+# shap for serve.py explainability (optional at runtime)
+shap>=0.41

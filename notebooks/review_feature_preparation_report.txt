@@ -1,0 +1,62 @@
+======================================================================
+REVIEW SCORE FEATURE PREPARATION – FINAL REPORT
+Target: review_score ∈ {1, 2, 3, 4, 5}
+======================================================================
+
+1. LEAKAGE BOUNDARIES (delivery-time-safe only)
+   Included: order/delivery timestamps, order value, freight, item_count,
+   approval_delay_hours, delivery_delay_days, late_delivery_flag, primary_category,
+   primary_seller_id, seller_state, customer_state, payment_type_primary.
+   Excluded: review_comment_*, review timestamps, any post-review variables.
+
+2. HIGH CORRELATION PAIRS (|r| > 0.8)
+   late_delivery_flag vs late_freight_ratio: 0.845
+
+3. REDUNDANT FEATURES REMOVED
+   total_freight_value, delivery_delay_times_value, approval_delay_times_value
+
+4. FINAL SELECTED FEATURES
+   Numeric: total_order_value, freight_ratio, item_count, approval_delay_hours, delivery_delay_days, late_delivery_flag, late_freight_ratio, seller_hist_avg_review, seller_hist_1star_rate, seller_hist_5star_rate, category_hist_avg_review, category_hist_dissatisfaction_rate
+   Categorical: primary_category, primary_seller_id, seller_state, customer_state, payment_type_primary, order_value_bucket, freight_ratio_bucket, delivery_delay_bucket
+
+5. FEATURE IMPORTANCE COMPARISON TABLE
+                                    rf_importance  mutual_info  logistic_abs_coef  rf_rank  mi_rank  log_rank   avg_rank
+delivery_delay_days                      0.270681     0.084421       9.590590e-02      1.0      1.0       3.0   1.666667
+total_order_value                        0.234879     0.013678       4.199239e-02      2.0      4.0       4.0   3.333333
+late_delivery_flag                       0.013225     0.062644       2.460288e-01      7.0      3.0       1.0   3.666667
+late_freight_ratio                       0.035376     0.066863       2.147334e-02      5.0      2.0       6.0   4.333333
+item_count                               0.013912     0.008613       1.481673e-01      6.0      7.0       2.0   5.000000
+freight_ratio                            0.230281     0.003038       3.731116e-02      3.0      9.0       5.0   5.666667
+approval_delay_hours                     0.201646     0.002369       8.778665e-03      4.0     10.0       7.0   7.000000
+category_hist_avg_review                 0.000000     0.011077       1.741433e-16     10.0      5.0       8.5   7.833333
+seller_hist_avg_review                   0.000000     0.010392       1.741433e-16     10.0      6.0       8.5   8.166667
+seller_hist_5star_rate                   0.000000     0.004117       0.000000e+00     10.0      8.0      12.0  10.000000
+category_hist_dissatisfaction_rate       0.000000     0.000739       8.162969e-18     10.0     11.0      10.0  10.333333
+seller_hist_1star_rate                   0.000000     0.000000       1.360495e-18     10.0     12.0      11.0  11.000000
+
+6. SUMMARY
+Which features drive 1-star predictions:
+  late_delivery_flag     0.687825
+item_count             0.438863
+delivery_delay_days    0.173643
+total_order_value      0.077804
+freight_ratio          0.030457
+
+Which features drive 5-star predictions:
+  late_delivery_flag     0.445499
+delivery_delay_days    0.220986
+item_count             0.166626
+freight_ratio          0.068655
+late_freight_ratio     0.033173
+
+Which features separate middle ratings (3 vs 4):
+  late_delivery_flag     0.267096
+item_count             0.116056
+delivery_delay_days    0.087414
+late_freight_ratio     0.067589
+freight_ratio          0.053236
+
+Potential modeling risks:
+  - Class imbalance: Score 5 dominates; use class_weight='balanced' or macro F1.
+  - Seller skew: many sellers with few orders; historical aggregates may be noisy.
+  - Category × late_delivery interaction: some categories may have few late orders.

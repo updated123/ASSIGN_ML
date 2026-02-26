@@ -1,0 +1,10 @@
+LEARNINGS SUMMARY
+============================================================
+Model: xgboost
+Test Macro-F1: 0.2430
+Test Weighted-F1: 0.4346
+
+Findings from comparing baseline LR vs stronger model:
+ - Macro-F1 is primary for imbalanced multi-class; accuracy is misleading.
+ - Per-class recall (especially 1-star) matters for detecting bad reviews.
+ - Temporal split avoids future leakage and gives realistic performance.

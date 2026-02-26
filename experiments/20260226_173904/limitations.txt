@@ -1,0 +1,23 @@
+PRACTICAL LIMITATIONS
+============================================================
+
+1. Class imbalance (5-star dominant ~58%)
+   - Model may still bias toward 5; macro F1 and per-class recall are more reliable than accuracy.
+   - Rare classes (1, 2) may have higher false-negative rates.
+
+2. Subjective nature of reviews
+   - Same delivery experience can yield different scores; label noise is inherent.
+
+3. Possible non-response bias
+   - Not all delivered orders have reviews; reviewers may differ from non-reviewers.
+
+4. Seller-level skew
+   - Many sellers with few orders; historical aggregates can be noisy for long-tail sellers.
+
+5. Temporal drift risk
+   - Train/val/test are time-based; if marketplace or behavior shifts, performance may degrade.
+
+When predictions should NOT be fully trusted:
+   - New sellers/categories with little history.
+   - Using the model for high-stakes decisions (e.g. penalties) without human review.
+   - Periods after known policy or seasonality changes.

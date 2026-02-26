@@ -1,0 +1,7 @@
+LEARNINGS FROM COMPARING MODELS
+==================================================
+Baseline (Multinomial LR) val macro F1: 0.2716
+Best stronger model (random_forest) val macro F1: 0.2631
+Chosen for test: multinomial_lr
+
+Summary: Time-based split keeps evaluation honest. Macro F1 is primary to avoid 5-star dominance. Per-class recall (especially 1-star) matters for intervention. See error_analysis.txt for confusion (e.g. 3 vs 4) and segment performance.

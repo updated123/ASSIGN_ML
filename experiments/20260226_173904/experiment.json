@@ -1,0 +1,53 @@
+{
+  "run_id": "20260226_173904",
+  "model_type": "multinomial_lr",
+  "hyperparameters": "class_weight=balanced (LR); RF/XGB/LGB as in code",
+  "feature_set_used": {
+    "numeric": [
+      "total_order_value",
+      "freight_ratio",
+      "item_count",
+      "approval_delay_hours",
+      "delivery_delay_days",
+      "late_delivery_flag",
+      "late_freight_ratio",
+      "seller_hist_avg_review",
+      "seller_hist_1star_rate",
+      "seller_hist_5star_rate",
+      "category_hist_avg_review",
+      "category_hist_dissatisfaction_rate"
+    ],
+    "categorical_onehot": [
+      "primary_category",
+      "seller_state",
+      "customer_state",
+      "payment_type_primary",
+      "order_value_bucket",
+      "freight_ratio_bucket",
+      "delivery_delay_bucket"
+    ],
+    "categorical_ordinal": [
+      "primary_seller_id"
+    ]
+  },
+  "metrics": {
+    "val_macro_f1": 0.2715975291262299,
+    "test_accuracy": 0.3643826086956522,
+    "test_macro_f1": 0.23358405211627664,
+    "test_weighted_f1": 0.4125961048066431,
+    "test_macro_roc_auc_ovr": 0.5729552730020485,
+    "per_class_recall": {
+      "1": 0.2987267384916748,
+      "2": 0.07977207977207977,
+      "3": 0.20121951219512196,
+      "4": 0.2698120162182086,
+      "5": 0.427143778207608
+    }
+  },
+  "notes": "Time-based 70/15/15 split; preprocessing fit on train only; historical aggregates leakage-safe.",
+  "lr_per_class_coef_shape": [
+    5,
+    151
+  ],
+  "findings": "Best model: multinomial_lr. Val macro F1 0.2716 (LR) vs 0.2631 (stronger). Compare per-class recall for 1-star detection; see error_analysis.txt for confusion patterns and segment performance."
+}

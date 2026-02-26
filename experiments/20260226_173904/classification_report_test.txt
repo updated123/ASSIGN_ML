@@ -1,0 +1,13 @@
+Model: multinomial_lr
+
+              precision    recall  f1-score   support
+
+     score_1       0.23      0.30      0.26      1021
+     score_2       0.03      0.08      0.05       351
+     score_3       0.07      0.20      0.11       984
+     score_4       0.20      0.27      0.23      2713
+     score_5       0.70      0.43      0.53      9306
+
+    accuracy                           0.36     14375
+   macro avg       0.25      0.26      0.23     14375
+weighted avg       0.51      0.36      0.41     14375

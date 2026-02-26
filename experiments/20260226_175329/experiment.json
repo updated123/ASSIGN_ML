@@ -1,0 +1,50 @@
+{
+  "run_id": "20260226_175329",
+  "model_type": "xgboost",
+  "target": "review_score",
+  "train_frac": 0.7,
+  "val_frac": 0.15,
+  "test_frac": 0.15,
+  "hyperparameters": {
+    "n_estimators": null,
+    "max_depth": null
+  },
+  "feature_set": {
+    "numeric": [
+      "total_order_value",
+      "freight_ratio",
+      "item_count",
+      "approval_delay_hours",
+      "delivery_delay_days",
+      "late_delivery_flag",
+      "late_freight_ratio",
+      "seller_hist_avg_review",
+      "seller_hist_1star_rate",
+      "seller_hist_5star_rate",
+      "category_hist_avg_review",
+      "category_hist_dissatisfaction_rate"
+    ],
+    "categorical_onehot": [
+      "primary_category",
+      "seller_state",
+      "customer_state",
+      "payment_type_primary",
+      "order_value_bucket",
+      "freight_ratio_bucket",
+      "delivery_delay_bucket"
+    ],
+    "categorical_ordinal": [
+      "primary_seller_id"
+    ]
+  },
+  "metrics": {
+    "val_accuracy": 0.46803478260869563,
+    "val_macro_f1": 0.2739883163056004,
+    "val_weighted_f1": 0.4804910312636407,
+    "test_accuracy": 0.39325217391304346,
+    "test_macro_f1": 0.24304819174763564,
+    "test_weighted_f1": 0.43464494301437884
+  },
+  "notes": "Baseline LR vs stronger model; best selected by validation macro-F1. Class distribution: 5 dominant (~58%); macro-F1 prioritizes rare classes.",
+  "lr_coef_per_class": null
+}
