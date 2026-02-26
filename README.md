@@ -175,19 +175,21 @@ Artifacts: `model.joblib`, `preprocessor.joblib`, `feature_config.json` (or `.pk
 
 ## Docker
 
-The API can run in a container. The image expects **experiments/final_model/** to contain:
+### Review API (port 8000)
+
+The review image expects **experiments/final_model/** to contain:
 
 - `model.joblib` (or `model.pkl`)
 - `preprocessor.joblib` (or `preprocessor.pkl`)
 - `feature_config.json`
 
-Copy (or symlink) your chosen run into `final_model` before building:
+Copy a review run into `final_model` before building:
 
 ```bash
 mkdir -p experiments/final_model
-cp experiments/<run_id>/model.joblib experiments/final_model/
-cp experiments/<run_id>/preprocessor.joblib experiments/final_model/
-cp experiments/<run_id>/feature_config.json experiments/final_model/
+cp experiments/<review_run_id>/model.joblib experiments/final_model/
+cp experiments/<review_run_id>/preprocessor.joblib experiments/final_model/
+cp experiments/<review_run_id>/feature_config.json experiments/final_model/
 ```
 
 Build and run:
@@ -197,4 +199,41 @@ docker build -t review-predict .
 docker run -p 8000:8000 review-predict
 ```
 
-Then call `http://localhost:8000/predict` as in the curl example above.
+Then call `http://localhost:8000/predict` as in the review curl example above.
+
+### Delivery duration API (port 8001)
+
+The delivery image expects **experiments/final_model_delivery/** to contain:
+
+- `model.joblib` (or `model.pkl`)
+- `preprocessor.joblib` (or `preprocessor.pkl`)
+- `feature_config.json`
+
+Copy a delivery run into `final_model_delivery` before building:
+
+```bash
+mkdir -p experiments/final_model_delivery
+cp experiments/<delivery_run_id>/model.joblib experiments/final_model_delivery/
+cp experiments/<delivery_run_id>/preprocessor.joblib experiments/final_model_delivery/
+cp experiments/<delivery_run_id>/feature_config.json experiments/final_model_delivery/
+```
+
+Build and run:
+
+```bash
+docker build -f Dockerfile.delivery -t delivery-predict .
+docker run -p 8001:8001 delivery-predict
+```
+
+Then call `http://localhost:8001/predict` as in the delivery curl example above.
+
+### Run both with Docker Compose
+
+After creating both `final_model` and `final_model_delivery` as above:
+
+```bash
+docker compose up --build
+```
+
+- Review API: `http://localhost:8000`
+- Delivery API: `http://localhost:8001`

@@ -1,0 +1,36 @@
+# Run both APIs: review (8000) and delivery duration (8001).
+#
+# One-time setup: copy experiment artifacts into the expected folders.
+#
+# Review API:
+#   mkdir -p experiments/final_model
+#   cp experiments/<review_run_id>/model.joblib experiments/final_model/
+#   cp experiments/<review_run_id>/preprocessor.joblib experiments/final_model/
+#   cp experiments/<review_run_id>/feature_config.json experiments/final_model/
+#
+# Delivery API:
+#   mkdir -p experiments/final_model_delivery
+#   cp experiments/<delivery_run_id>/model.joblib experiments/final_model_delivery/
+#   cp experiments/<delivery_run_id>/preprocessor.joblib experiments/final_model_delivery/
+#   cp experiments/<delivery_run_id>/feature_config.json experiments/final_model_delivery/
+#
+# Then: docker compose up --build
+
+services:
+  review:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      - EXPERIMENT_DIR=/app/experiments/final_model
+
+  delivery:
+    build:
+      context: .
+      dockerfile: Dockerfile.delivery
+    ports:
+      - "8001:8001"
+    environment:
+      - DELIVERY_EXPERIMENT_DIR=/app/experiments/final_model_delivery

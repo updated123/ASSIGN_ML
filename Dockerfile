@@ -1,6 +1,8 @@
-# Production FastAPI review prediction service
+# Production FastAPI review score prediction service
 # Build: docker build -t review-predict .
 # Run:   docker run -p 8000:8000 review-predict
+#
+# Before building, copy a review experiment into experiments/final_model/ (see README).
 
 FROM python:3.10-slim AS builder
 

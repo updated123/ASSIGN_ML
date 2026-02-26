@@ -1,6 +1,7 @@
-# Exclude other experiment runs; only experiments/final_model/ is copied
+# Exclude other experiment runs; only final_model (review) and/or final_model_delivery (delivery) are copied
 experiments/*
 !experiments/final_model/
+!experiments/final_model_delivery/
 
 # Development and data
 .git
