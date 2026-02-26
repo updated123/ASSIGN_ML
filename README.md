@@ -5,22 +5,28 @@ Multi-class review score prediction with time-based train/val/test split, delive
 ## Structure
 
 ```
-src/
-├── train.py                        # Training (LR + XGBoost/RF), time-based split
-├── evaluate.py                     # Metrics, error analysis, limitations
-├── serve.py                        # FastAPI prediction service
-├── feature_preparation_review.py   # Feature pipeline and config
-├── data.py                         # Raw data loading
-exports/
-└── experiments/                    # One folder per run (model, preprocessor, config, reports)
-notebooks/                          # EDA, feature config, reports
+├── README.md
+├── requirements.txt
+├── Dockerfile
+├── notebooks/                      # EDA, feature config, reports
+├── src/                            # Production code
+│   ├── train.py
+│   ├── evaluate.py
+│   ├── serve.py
+│   ├── feature_preparation_review.py
+│   ├── data.py
+│   └── ...
+├── ai_chat_logs/
+├── data/                           # Raw CSVs
+└── exports/
+    └── experiments/                # One folder per run; final_model for serve
 ```
 
 ## Setup
 
 ```bash
 cd ASSIGN_ML
-pip install pandas numpy scikit-learn xgboost fastapi uvicorn pydantic joblib shap
+pip install -r requirements.txt
 ```
 
 ## Training and evaluation
@@ -51,7 +57,9 @@ Loads **model** and **preprocessor** from `exports/experiments/` (looks for `mod
 ### Run the server
 
 ```bash
-uvicorn src.serve:app --reload
+# Use final_model (or leave unset to use latest run under exports/experiments/)
+export EXPERIMENT_DIR=exports/experiments/final_model
+uvicorn src.serve:app --reload --host 0.0.0.0 --port 8000
 ```
 
 Default: `http://localhost:8000`. Docs: `http://localhost:8000/docs`.
